@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { api } from '../lib/api';
 import { useSession } from '../lib/session';
 import { Button, Field, IconButton, Row, Screen, Txt } from '../ui/primitives';
+import { pinProblem, PIN_HINT } from '../admin/pin';
 import { colors } from '../ui/theme';
 
 export default function EasyCafeMove() {
@@ -29,7 +30,7 @@ export default function EasyCafeMove() {
 
   const setNewPin = async () => {
     setError('');
-    if (!/^\d{4,6}$/.test(pin)) { setError(t('pinFormat')); return; }
+    { const pe = pinProblem(pin); if (pe) { setError(pe); return; } }
     if (pin !== pin2) { setError(t('pinsDontMatch')); return; }
     setBusy(true);
     try {
@@ -59,8 +60,9 @@ export default function EasyCafeMove() {
         </View>
       ) : (
         <View style={{ gap: 12, marginTop: 22 }}>
-          <Field icon="key" placeholder={t('newPin')} value={pin} onChangeText={(v) => setPin(v.replace(/\D/g, '').slice(0, 6))} keyboardType="number-pad" secureTextEntry />
-          <Field icon="key" placeholder={t('confirmPin')} value={pin2} onChangeText={(v) => setPin2(v.replace(/\D/g, '').slice(0, 6))} keyboardType="number-pad" secureTextEntry onSubmitEditing={setNewPin} />
+          <Field icon="key" placeholder="New password" value={pin} onChangeText={(v) => setPin(v.slice(0, 64))} autoCapitalize="none" autoCorrect={false} secureTextEntry />
+          <Field icon="key" placeholder="Confirm password" value={pin2} onChangeText={(v) => setPin2(v.slice(0, 64))} autoCapitalize="none" autoCorrect={false} secureTextEntry onSubmitEditing={setNewPin} />
+          <Txt v="tiny">{PIN_HINT}</Txt>
           {error ? <Txt v="small" color={colors.red}>{error}</Txt> : null}
           <Button title={t('setPinAndSignIn')} onPress={setNewPin} loading={busy} />
         </View>

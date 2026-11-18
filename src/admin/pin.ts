@@ -1,14 +1,11 @@
-// Player credential policy for admin-side registration — mirrors server/src/lib/pin-policy.ts
-// (checkStrongPin). Update both together when the kiosk policy changes.
-export const PIN_HINT = '6 digits · not all the same · no sequence (123456) · no simple repeats (121212, 123123, 112233)';
+// Player password policy — mirrors server/src/lib/pin-policy.ts (checkStrongPin).
+// The request field is still called `pin`. Update both together.
+export const PIN_HINT = '8–64 characters · at least one capital letter (A-Z) · at least one special character (!@#$%…)';
 
-export function pinProblem(pin: string): string | null {
-  if (!/^\d{6}$/.test(pin)) return 'PIN must be exactly 6 digits.';
-  if (/^(\d)\1{5}$/.test(pin)) return 'PIN can’t be all the same digit.';
-  const d = pin.split('').map(Number);
-  const asc = d.every((v, i) => i === 0 || v === (d[i - 1] + 1) % 10);
-  const desc = d.every((v, i) => i === 0 || v === (d[i - 1] + 9) % 10);
-  if (asc || desc) return 'PIN can’t be a straight sequence.';
-  if (/^(\d\d)\1\1$/.test(pin) || /^(\d{3})\1$/.test(pin) || /^(\d)\1(\d)\2(\d)\3$/.test(pin)) return 'PIN can’t be a simple repeat.';
+export function pinProblem(pw: string): string | null {
+  if (pw.length < 8 || pw.length > 64) return 'Password: at least 8 characters.';
+  if (!/[A-Z]/.test(pw)) return 'Password: at least one capital letter (A-Z).';
+  if (!/[^A-Za-z0-9\s]/.test(pw)) return 'Password: at least one special character (!@#$%…).';
+  if (!/^[\x20-\x7E]+$/.test(pw)) return 'Password: English letters, numbers and symbols only.';
   return null;
 }

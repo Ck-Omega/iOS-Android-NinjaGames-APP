@@ -103,7 +103,7 @@ function RegisterForm({ busy, run, done }: { busy: string | null; run: RunFn; do
     const pe = pinProblem(f.pin); if (pe) { setErr(pe); return; }
     if (f.phone.replace(/\D/g, '').length < 7) { setErr('Enter a valid phone number.'); return; }
     setErr('');
-    void run('register', () => adminApi.registerPlayer({ ...f, username: u }), `Registered ${u}`, false).then(() => done(u));
+    void run('register', () => adminApi.registerPlayer({ ...f, username: u }), `Registered ${u} — they sign in with this password`, false).then(() => done(u));
   };
   return (
     <View style={{ gap: 8 }}>
@@ -114,7 +114,7 @@ function RegisterForm({ busy, run, done }: { busy: string | null; run: RunFn; do
         <View style={{ flex: 1 }}><Field placeholder="Last name" value={f.lastName} onChangeText={(v) => setF({ ...f, lastName: v })} /></View>
       </Row>
       <Field placeholder="Phone (07… or +962…)" keyboardType="phone-pad" value={f.phone} onChangeText={(v) => setF({ ...f, phone: v })} />
-      <Field icon="key" placeholder="PIN" keyboardType="number-pad" secureTextEntry value={f.pin} onChangeText={(v) => setF({ ...f, pin: v.replace(/\D/g, '').slice(0, 6) })} />
+      <Field icon="key" placeholder="Password" autoCapitalize="none" autoCorrect={false} secureTextEntry value={f.pin} onChangeText={(v) => setF({ ...f, pin: v.slice(0, 64) })} />
       <Txt v="tiny">{PIN_HINT}</Txt>
       {err ? <Txt v="small" color={colors.red}>{err}</Txt> : null}
       <Button title="Create account" loading={busy === 'register'} onPress={submit} />
