@@ -23,7 +23,8 @@ export default function SignIn() {
   const [error, setError] = useState('');
   const [legacy, setLegacy] = useState(false);
   // Staff: typing the kiosk's admin phrase as the username turns the PIN box into the admin password.
-  const staff = username.trim().toLowerCase() === 'ghanemadmin';
+  const [staffMode, setStaffMode] = useState(false);
+  const staff = staffMode || username.trim().toLowerCase() === 'ghanemadmin';
 
   const submit = async () => {
     setError(''); setLegacy(false);
@@ -65,8 +66,8 @@ export default function SignIn() {
       <Txt v="small" style={{ marginTop: 8 }}>{t('signInHint')}</Txt>
 
       <View style={{ gap: 12, marginTop: 24 }}>
-        <Field icon="user" placeholder={t('username')} value={username} onChangeText={setUsername}
-          autoCapitalize="none" autoCorrect={false} autoComplete="username" textContentType="username" returnKeyType="next" />
+        {staffMode ? null : <Field icon="user" placeholder={t('username')} value={username} onChangeText={setUsername}
+          autoCapitalize="none" autoCorrect={false} autoComplete="username" textContentType="username" returnKeyType="next" />}
         <Field icon="key" placeholder={staff ? 'Admin password' : t('pin')} value={pin}
           onChangeText={(v) => setPin(staff ? v : asciiDigits(v).replace(/\D/g, '').slice(0, 6))}
           keyboardType={staff ? 'default' : 'number-pad'} autoCapitalize="none" secureTextEntry autoComplete="password" textContentType="password" onSubmitEditing={submit} returnKeyType="go" />
@@ -81,6 +82,10 @@ export default function SignIn() {
         </Row>
       </Pressable>
       {legacy ? <Button kind="ghost" small title={t('moveAccount')} style={{ marginTop: 12 }} onPress={() => router.push({ pathname: '/easycafe', params: { u: username.trim().toLowerCase() } })} /> : null}
+
+      <Pressable onPress={() => { setStaffMode(!staffMode); setPin(''); setError(''); }} style={{ marginTop: 18 }}>
+        <Txt v="small" color={colors.faint}>{staffMode ? 'Player sign-in' : 'Staff sign-in'}</Txt>
+      </Pressable>
 
       <Pressable onPress={() => router.push('/register')} style={{ marginTop: 28 }}>
         <Row gap={6}>
