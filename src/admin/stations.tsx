@@ -39,7 +39,15 @@ export function StationsTab({ busy, run }: { busy: string | null; run: RunFn }) 
     if (!baseRef.current) return;
     try {
       const s = await ctl<{ tvs?: any[]; bridge?: Bridge }>(baseRef.current, 'GET', '/api/state');
-      setTvs(s.tvs ?? []); setBridge(s.bridge ?? null); setErr('');
+      // The controller PC's clock can be off (it ran 1 h behind → sessions looked ~5 s long).
+      // Shift its timestamps onto this phone's clock using the `now` it reports.
+      const off = typeof (s as any).now === 'number' ? Date.now() / 1000 - (s as any).now : 0;
+      const fixed = (s.tvs ?? []).map((t: any) => ({
+        ...t,
+        session: t.session ? { ...t.session, ends_at: typeof (s as any).now === 'number' ? t.session.ends_at + off : Date.now() / 1000 + t.session.remaining, starts_at: (t.session.starts_at || 0) + off } : t.session,
+        claim: t.claim ? { ...t.claim, expires_at: t.claim.expires_at + off } : t.claim,
+      }));
+      setTvs(fixed); setBridge(s.bridge ?? null); setErr('');
     } catch (e) { setErr(e instanceof Error ? e.message : 'TVSession error'); }
   }, []);
 
@@ -188,7 +196,8 @@ function StationDetail({ base, tv, busy, act, post, found, onScan, onClose }: {
         <Txt v="eyebrow">TIMED PLAY</Txt>
         {tv.session ? (
           <View style={{ marginTop: 6, gap: 8 }}>
-            <Row between><Txt v="h3">{tv.session.user}</Txt><Text style={{ color: colors.amber, fontSize: 22, fontWeight: '800' }}>{tv.session.unlimited ? '∞' : fmtSec(left)}</Text></Row>
+            <Row between><Txt v="h3">{tv.session.user}</Txt><Text style={{ color: colors.amber, fontSize: 22, fontWeight: '800' }}>{tv.session.unlimited ? '∞' : (tv.session.starts_at ?? 0) > Date.now() / 1000 ? 'starting…' : fmtSec(left)}</Text></Row>
+            {(tv.session.starts_at ?? 0) > Date.now() / 1000 ? <Txt v="small">TV on → PS5 input. Clock starts in {Math.ceil((tv.session.starts_at ?? 0) - Date.now() / 1000)} s (then {fmtSec(left - Math.max(0, (tv.session.starts_at ?? 0) - Date.now() / 1000))}).</Txt> : null}
             {tv.session.unlimited ? <Txt v="small">Unlimited — no auto end. Ends only when staff end it.</Txt> : null}
             <Grid>
               <Action label="+30 min" busy={busy === k('x30')} onPress={() => void act(k('x30'), () => post('/api/session/extend', { tv_id: id, minutes: 30 }), '+30 min')} />
