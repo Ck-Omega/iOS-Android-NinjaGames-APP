@@ -83,7 +83,7 @@ export default function PsRemote() {
   return (
     <View style={[styles.fill, { paddingTop: insets.top + 6, paddingBottom: insets.bottom + 10 }]}>
       <Row between style={{ paddingHorizontal: 14 }}>
-        <Txt v="h3">{label || 'PS5'} · Remote</Txt>
+        <Txt v="h3">NG Play · {label || 'PS5'}</Txt>
         <Row gap={8}><Txt v="tiny">{fps} fps</Txt><Button small kind="danger" title="Close" onPress={() => void close()} /></Row>
       </Row>
       <View style={[styles.screen, { aspectRatio: aspect }]}>
@@ -99,6 +99,16 @@ export default function PsRemote() {
           <Key b="options" label="OPTIONS" send={send} small />
         </Row>
         <Row gap={6}>{(['r1', 'r2'] as const).map((b) => <Key key={b} b={b} label={b.toUpperCase()} send={send} small />)}</Row>
+      </Row>
+
+      <Row gap={8} style={{ paddingHorizontal: 14, marginTop: 10 }}>
+        <Button small kind="ghost" title="Wake PS5" style={{ flex: 1 }} onPress={() => void ctl(base.current, 'POST', '/api/ps5/power', { tv_id: tv, action: 'on' }).then((r) => setMsg(r.message ?? '')).catch((e) => setMsg(e.message))} />
+        <Button small kind="danger" title="PS5 rest mode" style={{ flex: 1 }} onPress={async () => {
+          alive.current = false;
+          try { await ctl(base.current, 'POST', '/api/ps5/relay/stop', {}); } catch { /* ignore */ }
+          try { await ctl(base.current, 'POST', '/api/ps5/power', { tv_id: tv, action: 'off' }); } catch { /* ignore */ }
+          router.back();
+        }} />
       </Row>
 
       <Row between style={{ paddingHorizontal: 22, marginTop: 14 }}>

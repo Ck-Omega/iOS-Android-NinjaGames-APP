@@ -3,6 +3,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, Pressable, Text, View } from 'react-native';
 import { router } from 'expo-router';
+import { SvgUri } from 'react-native-svg';
+import { ctlBase } from '../lib/admin';
 import { ctl, getControllerUrl, setControllerUrl, type CtlTv } from '../lib/admin';
 import { Button, Empty, Field, Glass, Pill, Row, Sheet, Txt } from '../ui/primitives';
 import { colors } from '../ui/theme';
@@ -142,7 +144,7 @@ export function StationsTab({ busy, run }: { busy: string | null; run: RunFn }) 
 
       {/* ── Station detail ── */}
       <Sheet visible={!!current} onClose={() => setSel(null)}>
-        {current ? <StationDetail tv={current} busy={busy} act={act} post={post} found={found} onScan={scan} onClose={() => setSel(null)} /> : null}
+        {current ? <StationDetail base={base} tv={current} busy={busy} act={act} post={post} found={found} onScan={scan} onClose={() => setSel(null)} /> : null}
       </Sheet>
 
       {/* ── Discovery ── */}
@@ -153,7 +155,8 @@ export function StationsTab({ busy, run }: { busy: string | null; run: RunFn }) 
   );
 }
 
-function StationDetail({ tv, busy, act, post, found, onScan, onClose }: {
+function StationDetail({ base, tv, busy, act, post, found, onScan, onClose }: {
+  base: string;
   tv: CtlTv & { ip?: string; hdmi?: string; kind?: string }; busy: string | null;
   act: (k: string, f: () => Promise<unknown>, t: string) => Promise<void>;
   post: (p: string, b: unknown) => Promise<unknown>; found: Found | null; onScan: () => void; onClose: () => void;
@@ -201,7 +204,22 @@ function StationDetail({ tv, busy, act, post, found, onScan, onClose }: {
               const m = Number(custom) || minutes;
               void act(k('start'), () => post('/api/session/new-code', { tv_id: id, user: user.trim() || 'Guest', minutes: m, start_now: true }), `${tv.label}: ${m} min started`);
             }} />
-            {tv.claim ? <Button small kind="ghost" title="Cancel pending code" loading={busy === k('cancel')} onPress={() => void act(k('cancel'), () => post('/api/session/cancel-code', { tv_id: id }), 'Code cancelled')} /> : null}
+            <Button small kind="ghost" title="Issue QR code (player scans)" loading={busy === k('qr')} onPress={() => {
+              const m = Number(custom) || minutes;
+              void act(k('qr'), () => post('/api/session/new-code', { tv_id: id, user: user.trim() || 'Guest', minutes: m }), 'QR code issued');
+            }} />
+            {tv.claim ? (
+              <View style={{ alignItems: 'center', gap: 8, marginTop: 4 }}>
+                <Txt v="small">Code for {tv.claim.user} · {tv.claim.minutes} min · expires {fmtSec(tv.claim.expires_at - Date.now() / 1000)}</Txt>
+                <View style={{ backgroundColor: '#fff', padding: 8, borderRadius: 12 }}>
+                  <SvgUri key={`${tv.claim.expires_at}`} uri={`${ctlBase(base)}/api/qr.svg?tv_id=${encodeURIComponent(id)}&t=${Math.round(tv.claim.expires_at)}`} width={190} height={190} />
+                </View>
+                <Row gap={8}>
+                  <Button small title="Reissue QR" loading={busy === k('reissue')} onPress={() => void act(k('reissue'), () => post('/api/session/new-code', { tv_id: id, user: tv.claim!.user, minutes: tv.claim!.minutes }), 'New QR code issued')} />
+                  <Button small kind="danger" title="Cancel code" loading={busy === k('cancel')} onPress={() => void act(k('cancel'), () => post('/api/session/cancel-code', { tv_id: id }), 'Code cancelled')} />
+                </Row>
+              </View>
+            ) : null}
           </View>
         )}
       </Glass>
@@ -223,7 +241,7 @@ function StationDetail({ tv, busy, act, post, found, onScan, onClose }: {
           <Action label="TV off" tone="red" busy={busy === k('tv-off')} onPress={() => void act(k('tv-off'), () => post('/api/tv/power', { tv_id: id, action: 'off' }), 'TV off')} />
           <Action label="PS5 on" disabled={!ps5Ip} busy={busy === k('ps-on')} onPress={() => void act(k('ps-on'), () => post('/api/ps5/power', { tv_id: id, action: 'on' }), 'PS5 waking')} />
           <Action label="PS5 rest mode" tone="red" disabled={!ps5Ip} busy={busy === k('ps-off')} onPress={() => void act(k('ps-off'), () => post('/api/ps5/power', { tv_id: id, action: 'off' }), 'PS5 resting')} />
-          <Action label="NG Play (remote)" tone="blue" disabled={!ps5Ip} onPress={() => { onClose(); router.push({ pathname: '/ps-remote' as any, params: { tv: id, label: tv.label } }); }} />
+          <Action label="NG Play" tone="blue" disabled={!ps5Ip} onPress={() => { onClose(); router.push({ pathname: '/ps-remote' as any, params: { tv: id, label: tv.label } }); }} />
           <Action label="Open kiosk" busy={busy === k('kiosk')} onPress={() => void act(k('kiosk'), () => post('/api/tv/app', { tv_id: id, app: 'tv browser' }), 'Kiosk opened')} />
           <Action label="Switch to PS5" busy={busy === k('game')} onPress={() => void act(k('game'), () => post('/api/tv/game', { tv_id: id }), 'Switched to PS5 input')} />
           <Action label="Connect / reconnect" busy={busy === k('conn')} onPress={() => void act(k('conn'), () => post('/api/tv/connect', { tv_id: id, ip: ip.trim() }), 'Connect sent')} />
