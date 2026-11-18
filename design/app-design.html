@@ -1,0 +1,683 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ninja Games App Design</title>
+<style>
+@font-face { font-family: 'Outfit'; font-weight: 400; src: url(../assets/fonts/outfit-0.ttf); }
+@font-face { font-family: 'Outfit'; font-weight: 500; src: url(../assets/fonts/outfit-1.ttf); }
+@font-face { font-family: 'Outfit'; font-weight: 600; src: url(../assets/fonts/outfit-2.ttf); }
+@font-face { font-family: 'Outfit'; font-weight: 700; src: url(../assets/fonts/outfit-3.ttf); }
+@font-face { font-family: 'Outfit'; font-weight: 800; src: url(../assets/fonts/outfit-4.ttf); }
+@font-face { font-family: 'Jakarta'; font-weight: 400; src: url(../assets/fonts/jakarta-5.ttf); }
+@font-face { font-family: 'Jakarta'; font-weight: 500; src: url(../assets/fonts/jakarta-6.ttf); }
+@font-face { font-family: 'Jakarta'; font-weight: 600; src: url(../assets/fonts/jakarta-7.ttf); }
+@font-face { font-family: 'Jakarta'; font-weight: 700; src: url(../assets/fonts/jakarta-8.ttf); }
+@font-face { font-family: 'Jakarta'; font-weight: 800; src: url(../assets/fonts/jakarta-9.ttf); }
+
+:root {
+  --bg: #04090a;
+  --bg2: #071510;
+  --glass: rgba(255,255,255,0.055);
+  --glass-2: rgba(255,255,255,0.085);
+  --line: rgba(255,255,255,0.10);
+  --line-2: rgba(255,255,255,0.16);
+  --text: #eefcf4;
+  --muted: rgba(226,245,235,0.62);
+  --faint: rgba(226,245,235,0.38);
+  --em: #2BE38A;
+  --em-2: #12B866;
+  --em-deep: #0B6B3D;
+  --em-glow: rgba(43,227,138,0.35);
+  --amber: #FFC857;
+  --red: #FF5D6C;
+  --blue: #63B3FF;
+  --radius: 22px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #020504;
+  color: var(--text);
+  font-family: 'Jakarta', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+.board { max-width: 1680px; margin: 0 auto; padding: 48px 32px 80px; }
+.board-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; margin-bottom: 36px; }
+.board-head h1 { font-family: 'Outfit'; font-size: 40px; font-weight: 800; letter-spacing: -0.02em; }
+.board-head p { color: var(--muted); max-width: 640px; margin-top: 8px; line-height: 1.55; }
+.swatches { display: flex; gap: 10px; flex-wrap: wrap; }
+.sw { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 999px; font-size: 12px; color: var(--muted); background: var(--glass); }
+.sw i { width: 14px; height: 14px; border-radius: 50%; display: block; }
+.section-title { font-family: 'Outfit'; font-size: 13px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: var(--em); margin: 44px 0 18px; }
+.row { display: flex; gap: 34px; flex-wrap: wrap; align-items: flex-start; }
+.cap { margin-top: 14px; max-width: 360px; }
+.cap b { font-family: 'Outfit'; font-size: 17px; display: block; margin-bottom: 4px; }
+.cap span { color: var(--muted); font-size: 13px; line-height: 1.5; }
+
+/* ── Phone frame ───────────────────────────── */
+.phone {
+  width: 360px; height: 780px; border-radius: 46px; position: relative; overflow: hidden;
+  background:
+    radial-gradient(120% 60% at 15% -5%, rgba(43,227,138,0.22), transparent 60%),
+    radial-gradient(90% 50% at 110% 30%, rgba(18,184,102,0.14), transparent 60%),
+    radial-gradient(80% 40% at 50% 110%, rgba(43,227,138,0.10), transparent 60%),
+    linear-gradient(180deg, #06120d 0%, var(--bg) 55%, #030706 100%);
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 40px 90px rgba(0,0,0,0.6), 0 0 0 9px #0b0f0e, 0 0 0 10px rgba(255,255,255,0.08);
+}
+.status { height: 46px; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; font-size: 13px; font-weight: 700; position: relative; z-index: 3; }
+.status .island { position: absolute; left: 50%; top: 10px; transform: translateX(-50%); width: 108px; height: 30px; border-radius: 20px; background: #000; }
+.status .icons { display: flex; gap: 6px; align-items: center; }
+.status .icons span { width: 16px; height: 9px; border-radius: 3px; border: 1.5px solid var(--text); position: relative; }
+.status .icons span::after { content: ''; position: absolute; inset: 1px; right: 4px; background: var(--text); border-radius: 1px; }
+.scr { position: absolute; inset: 46px 0 0 0; padding: 6px 18px 120px; overflow: hidden; }
+.scr.noPad { padding: 0; }
+
+/* ── Tab bar ───────────────────────────────── */
+.tabs {
+  position: absolute; left: 14px; right: 14px; bottom: 18px; height: 68px; border-radius: 26px; z-index: 5;
+  background: rgba(10,22,17,0.72); border: 1px solid var(--line); backdrop-filter: blur(22px);
+  display: grid; grid-template-columns: repeat(5, 1fr); align-items: center; padding: 0 6px;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.45);
+}
+.tab { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 600; color: var(--faint); }
+.tab svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.tab.on { color: var(--em); }
+.tab.on .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--em); box-shadow: 0 0 10px var(--em); }
+.tab .dot { width: 4px; height: 4px; }
+.homebar { position: absolute; bottom: 7px; left: 50%; transform: translateX(-50%); width: 128px; height: 4px; border-radius: 4px; background: rgba(255,255,255,0.55); z-index: 6; }
+
+/* ── Primitives ────────────────────────────── */
+.glass { background: var(--glass); border: 1px solid var(--line); border-radius: var(--radius); backdrop-filter: blur(18px); }
+.h1 { font-family: 'Outfit'; font-weight: 800; font-size: 30px; letter-spacing: -0.02em; line-height: 1.05; }
+.h2 { font-family: 'Outfit'; font-weight: 700; font-size: 19px; letter-spacing: -0.01em; }
+.h3 { font-family: 'Outfit'; font-weight: 700; font-size: 15px; }
+.eyebrow { font-size: 10.5px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--faint); }
+.muted { color: var(--muted); }
+.faint { color: var(--faint); }
+.small { font-size: 12px; }
+.tiny { font-size: 10.5px; }
+.num { font-family: 'Outfit'; font-weight: 800; letter-spacing: -0.02em; }
+.btn { display: flex; align-items: center; justify-content: center; gap: 8px; height: 52px; border-radius: 18px; font-family: 'Outfit'; font-weight: 700; font-size: 15.5px; border: 0; }
+.btn.primary { background: linear-gradient(180deg, #3cf09a, var(--em-2)); color: #032013; box-shadow: 0 10px 28px var(--em-glow), inset 0 1px 0 rgba(255,255,255,0.5); }
+.btn.ghost { background: var(--glass-2); color: var(--text); border: 1px solid var(--line); }
+.btn.danger { background: rgba(255,93,108,0.12); color: var(--red); border: 1px solid rgba(255,93,108,0.3); }
+.btn svg, .ic { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.pill { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 999px; font-size: 11px; font-weight: 700; background: var(--glass-2); border: 1px solid var(--line); }
+.pill.em { color: var(--em); background: rgba(43,227,138,0.10); border-color: rgba(43,227,138,0.28); }
+.pill.amber { color: var(--amber); background: rgba(255,200,87,0.10); border-color: rgba(255,200,87,0.28); }
+.pill.red { color: var(--red); background: rgba(255,93,108,0.10); border-color: rgba(255,93,108,0.28); }
+.pill.blue { color: var(--blue); background: rgba(99,179,255,0.10); border-color: rgba(99,179,255,0.28); }
+.live { width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 3px rgba(43,227,138,0.18); }
+.avatar { width: 40px; height: 40px; border-radius: 14px; background: linear-gradient(135deg, #1d6b45, #0b2a1d); border: 1px solid var(--line-2); display: grid; place-items: center; font-family: 'Outfit'; font-weight: 800; font-size: 15px; overflow: hidden; flex: none; }
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+.iconbtn { width: 40px; height: 40px; border-radius: 14px; display: grid; place-items: center; background: var(--glass); border: 1px solid var(--line); position: relative; flex: none; }
+.iconbtn .badge { position: absolute; top: 8px; right: 9px; width: 7px; height: 7px; border-radius: 50%; background: var(--em); box-shadow: 0 0 8px var(--em); }
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; padding: 4px; border-radius: 16px; background: rgba(255,255,255,0.05); border: 1px solid var(--line); }
+.seg div { height: 36px; border-radius: 12px; display: grid; place-items: center; font-size: 13px; font-weight: 700; color: var(--muted); }
+.seg .on { background: rgba(43,227,138,0.14); color: var(--em); box-shadow: inset 0 0 0 1px rgba(43,227,138,0.3); }
+.input { height: 54px; border-radius: 18px; background: rgba(255,255,255,0.05); border: 1px solid var(--line); display: flex; align-items: center; gap: 10px; padding: 0 16px; color: var(--muted); font-size: 15px; }
+.input.focus { border-color: rgba(43,227,138,0.55); box-shadow: 0 0 0 4px rgba(43,227,138,0.10); color: var(--text); }
+.stack > * + * { margin-top: 12px; }
+.between { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.flex { display: flex; align-items: center; gap: 10px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.progress { height: 6px; border-radius: 6px; background: rgba(255,255,255,0.08); overflow: hidden; }
+.progress i { display: block; height: 100%; border-radius: 6px; background: linear-gradient(90deg, var(--em-2), var(--em)); box-shadow: 0 0 12px var(--em-glow); }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; border-radius: 32px 32px 0 0; background: rgba(9,20,15,0.96); border-top: 1px solid var(--line-2); padding: 12px 20px 34px; z-index: 8; box-shadow: 0 -30px 60px rgba(0,0,0,0.55); }
+.sheet .grab { width: 40px; height: 5px; border-radius: 4px; background: rgba(255,255,255,0.25); margin: 0 auto 16px; }
+.scrim { position: absolute; inset: 0; background: rgba(0,0,0,0.55); z-index: 7; }
+
+/* ── Screen specifics ──────────────────────── */
+.hero { position: relative; border-radius: 26px; overflow: hidden; height: 168px; border: 1px solid var(--line-2); }
+.hero img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(3,12,8,0.92) 0%, rgba(3,12,8,0.55) 55%, rgba(3,12,8,0.05) 100%); }
+.hero .in { position: absolute; inset: 0; z-index: 2; padding: 18px; display: flex; flex-direction: column; justify-content: space-between; }
+.bal { padding: 14px; border-radius: 20px; position: relative; overflow: hidden; }
+.bal .ico { width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center; }
+.bal.pc .ico { background: rgba(43,227,138,0.14); color: var(--em); }
+.bal.ps .ico { background: rgba(99,179,255,0.14); color: var(--blue); }
+.qa { padding: 14px 12px; border-radius: 20px; display: flex; flex-direction: column; gap: 10px; }
+.qa .qi { width: 38px; height: 38px; border-radius: 13px; display: grid; place-items: center; }
+.holdcard { border-radius: 24px; padding: 16px; background: linear-gradient(135deg, rgba(43,227,138,0.20), rgba(43,227,138,0.04)); border: 1px solid rgba(43,227,138,0.35); box-shadow: 0 0 40px rgba(43,227,138,0.12) inset; }
+.ring { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; background: conic-gradient(var(--em) 0 68%, rgba(255,255,255,0.08) 68% 100%); flex: none; }
+.ring div { width: 52px; height: 52px; border-radius: 50%; background: #082015; display: grid; place-items: center; font-family: 'Outfit'; font-weight: 800; font-size: 15px; }
+
+.pcgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.seat { height: 64px; border-radius: 16px; border: 1px solid var(--line); background: var(--glass); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-family: 'Outfit'; font-weight: 700; font-size: 13px; position: relative; }
+.seat small { font-family: 'Jakarta'; font-size: 9px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.seat.free { border-color: rgba(43,227,138,0.4); background: rgba(43,227,138,0.08); }
+.seat.free small { color: var(--em); }
+.seat.busy { opacity: 0.55; } .seat.busy small { color: var(--red); }
+.seat.held small { color: var(--amber); } .seat.held { border-color: rgba(255,200,87,0.3); }
+.seat.off { opacity: 0.3; } .seat.off small { color: var(--faint); }
+.seat.sel { border-color: var(--em); background: rgba(43,227,138,0.2); box-shadow: 0 0 0 3px rgba(43,227,138,0.2), 0 0 24px rgba(43,227,138,0.35); }
+.legend { display: flex; gap: 12px; font-size: 11px; color: var(--muted); }
+.legend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+
+.cam { position: absolute; inset: 0; background:
+  radial-gradient(60% 40% at 50% 38%, rgba(30,60,90,0.55), transparent 70%),
+  linear-gradient(180deg, #0a1218, #040608); }
+.cam img { position: absolute; left: 50%; top: 22%; width: 380px; transform: translateX(-50%); opacity: 0.18; filter: blur(1px); }
+.viewfinder { position: absolute; left: 50%; top: 150px; transform: translateX(-50%); width: 230px; height: 230px; }
+.viewfinder .c { position: absolute; width: 46px; height: 46px; border: 4px solid var(--em); filter: drop-shadow(0 0 8px var(--em)); }
+.viewfinder .tl { left: 0; top: 0; border-right: 0; border-bottom: 0; border-radius: 18px 0 0 0; }
+.viewfinder .tr { right: 0; top: 0; border-left: 0; border-bottom: 0; border-radius: 0 18px 0 0; }
+.viewfinder .bl { left: 0; bottom: 0; border-right: 0; border-top: 0; border-radius: 0 0 0 18px; }
+.viewfinder .br { right: 0; bottom: 0; border-left: 0; border-top: 0; border-radius: 0 0 18px 0; }
+.viewfinder .qr { position: absolute; inset: 34px; border-radius: 10px; background:
+  repeating-linear-gradient(90deg, rgba(255,255,255,0.9) 0 9px, transparent 9px 18px),
+  repeating-linear-gradient(0deg, rgba(255,255,255,0.9) 0 9px, transparent 9px 18px);
+  -webkit-mask: radial-gradient(circle at 30% 40%, #000 30%, transparent 31%), linear-gradient(#000, #000);
+  opacity: 0.85; mix-blend-mode: screen; }
+.viewfinder .scan { position: absolute; left: 14px; right: 14px; top: 46%; height: 2px; background: var(--em); box-shadow: 0 0 18px 4px var(--em-glow); }
+
+.pkg { border-radius: 18px; padding: 12px 6px; text-align: center; border: 1px solid var(--line); background: var(--glass); }
+.pkg.on { border-color: var(--em); background: rgba(43,227,138,0.12); box-shadow: 0 0 0 3px rgba(43,227,138,0.15); }
+
+.wallet { border-radius: 26px; padding: 18px; position: relative; overflow: hidden; border: 1px solid var(--line-2); }
+.wallet.pc { background: linear-gradient(140deg, rgba(43,227,138,0.24), rgba(10,40,26,0.6) 60%); }
+.wallet.ps { background: linear-gradient(140deg, rgba(99,179,255,0.22), rgba(10,24,40,0.6) 60%); }
+.wallet img { position: absolute; right: -16px; bottom: -18px; width: 132px; opacity: 0.9; }
+.swapbtn { width: 44px; height: 44px; border-radius: 15px; display: grid; place-items: center; background: linear-gradient(180deg, #3cf09a, var(--em-2)); color: #032013; box-shadow: 0 8px 20px var(--em-glow); margin: -10px auto; position: relative; z-index: 2; border: 4px solid #07130e; }
+.feeRow { display: flex; justify-content: space-between; font-size: 13px; padding: 7px 0; color: var(--muted); }
+.feeRow b { color: var(--text); font-weight: 700; }
+
+.food { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.fcard { border-radius: 20px; overflow: hidden; border: 1px solid var(--line); background: var(--glass); }
+.fcard .ph { height: 96px; position: relative; }
+.fcard .ph img { width: 100%; height: 100%; object-fit: cover; }
+.fcard .ph .t { position: absolute; left: 8px; top: 8px; }
+.fcard .bd { padding: 10px 11px 11px; }
+.fcard .add { width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center; background: rgba(43,227,138,0.16); color: var(--em); border: 1px solid rgba(43,227,138,0.3); font-weight: 800; }
+.cart { position: absolute; left: 16px; right: 16px; bottom: 98px; height: 58px; border-radius: 20px; z-index: 5; display: flex; align-items: center; justify-content: space-between; padding: 0 8px 0 16px; background: linear-gradient(180deg, #3cf09a, var(--em-2)); color: #032013; box-shadow: 0 14px 34px var(--em-glow); font-family: 'Outfit'; font-weight: 800; }
+.cart .go { height: 42px; padding: 0 16px; border-radius: 14px; background: rgba(3,32,19,0.9); color: var(--em); display: flex; align-items: center; gap: 6px; }
+
+.tcard { border-radius: 24px; overflow: hidden; border: 1px solid var(--line-2); position: relative; height: 178px; }
+.tcard > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.tcard::after { content: ''; position: absolute; inset: 0; background: linear-gradient(0deg, rgba(3,10,7,0.96) 10%, rgba(3,10,7,0.2) 70%); }
+.tcard .in { position: absolute; inset: 0; z-index: 2; padding: 14px; display: flex; flex-direction: column; justify-content: space-between; }
+.lb { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 18px; }
+.lb .rk { width: 24px; font-family: 'Outfit'; font-weight: 800; color: var(--faint); text-align: center; }
+.lb.me { background: rgba(43,227,138,0.10); border: 1px solid rgba(43,227,138,0.3); }
+
+.friend { display: flex; align-items: center; gap: 12px; padding: 10px 4px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.onl { position: relative; }
+.onl::after { content: ''; position: absolute; right: -2px; bottom: -2px; width: 12px; height: 12px; border-radius: 50%; background: var(--em); border: 2.5px solid #06120d; }
+.bubble { max-width: 76%; padding: 10px 13px; border-radius: 18px; font-size: 13.5px; line-height: 1.4; }
+.bubble.them { background: var(--glass-2); border: 1px solid var(--line); border-bottom-left-radius: 6px; }
+.bubble.me { margin-left: auto; background: linear-gradient(180deg, #34e892, var(--em-2)); color: #032013; font-weight: 600; border-bottom-right-radius: 6px; }
+
+/* ── Kiosk blocker (PC monitor) ────────────── */
+.monitor { width: 760px; border-radius: 22px; padding: 14px; background: #0b0f0e; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 40px 90px rgba(0,0,0,0.6); }
+.monitor .screen { height: 430px; border-radius: 12px; position: relative; overflow: hidden; background: radial-gradient(70% 60% at 50% 40%, #0b2a1b, #020604); display: grid; place-items: center; }
+.monitor .screen::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, rgba(57,255,20,0.04) 0 1px, transparent 1px 40px), repeating-linear-gradient(0deg, rgba(57,255,20,0.04) 0 1px, transparent 1px 40px); }
+.blocker { position: relative; width: 340px; border-radius: 24px; padding: 24px; text-align: center; background: rgba(6,20,13,0.95); border: 1px solid rgba(57,255,20,0.3); box-shadow: 0 0 70px rgba(57,255,20,0.15); }
+.stand { width: 140px; height: 40px; margin: 0 auto; background: linear-gradient(180deg, #111, #0a0a0a); clip-path: polygon(30% 0, 70% 0, 100% 100%, 0 100%); }
+
+.rtl { direction: rtl; font-family: 'Jakarta', 'Segoe UI', Tahoma, sans-serif; }
+.note { margin-top: 40px; padding: 18px 20px; border-radius: 18px; border: 1px solid var(--line); background: var(--glass); color: var(--muted); font-size: 13.5px; line-height: 1.65; max-width: 1100px; }
+.note b { color: var(--text); }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="6"/><path d="M7 10v4M5 12h4"/><circle cx="16" cy="11" r="1"/><circle cx="18" cy="13" r="1"/></symbol>
+    <symbol id="i-food" viewBox="0 0 24 24"><path d="M4 3v8a3 3 0 0 0 3 3v7M7 3v6M10 3v8a3 3 0 0 1-3 3M17 21V3c-2 0-4 3-4 7s2 5 4 5"/></symbol>
+    <symbol id="i-wallet" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18M16 15h2"/><path d="M6 6V5a2 2 0 0 1 2-2h9"/></symbol>
+    <symbol id="i-squad" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.5a5 5 0 0 1 5.5 5"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4z"/><path d="M10 21h4"/></symbol>
+    <symbol id="i-monitor" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></symbol>
+    <symbol id="i-scan" viewBox="0 0 24 24"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M7 12h10"/></symbol>
+    <symbol id="i-swap" viewBox="0 0 24 24"><path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/></symbol>
+    <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3a3 3 0 0 1-3 4M7 5H4a3 3 0 0 0 3 4"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+    <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M17 6l3 3M15 8l2 2"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="m4 12 16-8-6 16-3-7z"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></symbol>
+    <symbol id="i-bag" viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6zM9 8V6a3 3 0 0 1 6 0v2"/></symbol>
+    <symbol id="i-flash" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
+  </defs>
+</svg>
+
+<div class="board">
+  <div class="board-head">
+    <div>
+      <h1>Ninja Games app design</h1>
+      <p>iOS and Android app, green glass system. Five tabs: Home · Play · Order · Wallet · Squad. Arabic and English with full right-to-left layout. Every screen below uses live data from the new <code>/api/app/*</code> routes.</p>
+    </div>
+    <div class="swatches">
+      <div class="sw"><i style="background:#04090a;border:1px solid #333"></i>Night #04090A</div>
+      <div class="sw"><i style="background:#2BE38A"></i>Ninja emerald #2BE38A</div>
+      <div class="sw"><i style="background:#63B3FF"></i>PlayStation blue #63B3FF</div>
+      <div class="sw"><i style="background:#FFC857"></i>Held amber #FFC857</div>
+      <div class="sw"><i style="background:#FF5D6C"></i>Busy red #FF5D6C</div>
+      <div class="sw">Outfit · Plus Jakarta Sans</div>
+    </div>
+  </div>
+
+  <!-- ═════════════════ ROW 1 ═════════════════ -->
+  <div class="section-title">Sign in · Home · Play</div>
+  <div class="row">
+
+    <!-- 1. SIGN IN -->
+    <div>
+      <div class="phone">
+        <div class="status"><span>9:41</span><div class="island"></div><div class="icons"><span></span></div></div>
+        <img src="../assets/art/login-ambience.png" style="position:absolute;inset:0;width:100%;height:58%;object-fit:cover;opacity:.55;-webkit-mask:linear-gradient(#000 40%,transparent)">
+        <div class="scr" style="padding-top:150px">
+          <img src="../assets/art/ninja-games-logo.png" style="width:86px;height:86px;object-fit:contain;filter:drop-shadow(0 8px 24px rgba(43,227,138,.45))">
+          <div class="h1" style="margin-top:14px">Welcome back,<br>Ninja.</div>
+          <p class="muted small" style="margin-top:8px">Sign in with the same username and PIN you use on the PCs.</p>
+          <div class="stack" style="margin-top:22px">
+            <div class="input"><svg class="ic"><use href="#i-user"/></svg>ninja_omar</div>
+            <div class="input focus"><svg class="ic"><use href="#i-key"/></svg><span style="letter-spacing:.5em">••••••</span></div>
+            <div class="btn primary">Sign in</div>
+          </div>
+          <div class="between" style="margin-top:16px">
+            <span class="small muted">Coming from EasyCafe? <b style="color:var(--em)">Move my account</b></span>
+          </div>
+          <div class="between" style="margin-top:26px">
+            <span class="small faint">New here? <b style="color:var(--text)">Create account</b></span>
+            <span class="pill"><svg class="ic" style="width:14px;height:14px"><use href="#i-globe"/></svg>عربي</span>
+          </div>
+        </div>
+        <div class="homebar"></div>
+      </div>
+      <div class="cap"><b>1 · Sign in</b><span>Same username and PIN as the kiosk. EasyCafe members sign in once with their old password and pick a new PIN. New accounts use the staff approval code, the same as the kiosk.</span></div>
+    </div>
+
+    <!-- 2. HOME (with active hold) -->
+    <div>
+      <div class="phone">
+        <div class="status"><span>9:41</span><div class="island"></div><div class="icons"><span></span></div></div>
+        <div class="scr">
+          <div class="between">
+            <div class="flex"><div class="avatar"><img src="../assets/art/ninja-mascot.png"></div><div><div class="tiny faint">Good evening</div><div class="h3">ninja_omar</div></div></div>
+            <div class="flex"><span class="pill amber">VIP</span><div class="iconbtn"><svg class="ic"><use href="#i-bell"/></svg><i class="badge"></i></div></div>
+          </div>
+
+          <div class="holdcard" style="margin-top:16px">
+            <div class="between">
+              <div>
+                <span class="pill em"><i class="live"></i>PC HELD · TIME RUNNING</span>
+                <div class="h2" style="margin-top:10px">PC-07 is yours</div>
+                <div class="small muted" style="margin-top:2px">Unlock it with your PIN at the PC</div>
+              </div>
+              <div class="ring"><div>3h 12</div></div>
+            </div>
+            <div class="flex" style="margin-top:12px;gap:8px">
+              <div class="btn ghost" style="height:40px;flex:1;font-size:13px">Directions</div>
+              <div class="btn danger" style="height:40px;flex:1;font-size:13px">Cancel hold</div>
+            </div>
+          </div>
+
+          <div class="grid2" style="margin-top:12px">
+            <div class="bal pc glass"><div class="between"><div class="ico"><svg class="ic"><use href="#i-monitor"/></svg></div><span class="tiny faint">PC</span></div><div class="num" style="font-size:24px;margin-top:10px">1,280</div><div class="tiny muted">tokens · 3h 12m time</div></div>
+            <div class="bal ps glass"><div class="between"><div class="ico"><svg class="ic"><use href="#i-play"/></svg></div><span class="tiny faint">PS5</span></div><div class="num" style="font-size:24px;margin-top:10px">640</div><div class="tiny muted">tokens · ≈ 6h 24m</div></div>
+          </div>
+
+          <div class="grid2" style="margin-top:10px">
+            <div class="qa glass"><div class="qi" style="background:rgba(43,227,138,.14);color:var(--em)"><svg class="ic"><use href="#i-monitor"/></svg></div><div><div class="h3">Hold a PC</div><div class="tiny muted">8 of 12 free now</div></div></div>
+            <div class="qa glass"><div class="qi" style="background:rgba(99,179,255,.14);color:var(--blue)"><svg class="ic"><use href="#i-scan"/></svg></div><div><div class="h3">Start PS5</div><div class="tiny muted">Scan the TV code</div></div></div>
+          </div>
+
+          <div class="between" style="margin-top:16px"><div class="h3">Next up</div><span class="small faint">See all</span></div>
+          <div class="hero" style="margin-top:10px;height:118px">
+            <img src="../assets/art/ninja-trophy.png" style="object-position:right center">
+            <div class="in"><div><span class="pill em">OPEN · 12/16</span></div><div><div class="h2">Ninja Open · Valorant</div><div class="tiny muted">Fri 8:00 PM · 150 tokens entry</div></div></div>
+          </div>
+        </div>
+        <div class="tabs">
+          <div class="tab on"><svg><use href="#i-home"/></svg>Home<i class="dot"></i></div>
+          <div class="tab"><svg><use href="#i-play"/></svg>Play<i class="dot"></i></div>
+          <div class="tab"><svg><use href="#i-food"/></svg>Order<i class="dot"></i></div>
+          <div class="tab"><svg><use href="#i-wallet"/></svg>Wallet<i class="dot"></i></div>
+          <div class="tab"><svg><use href="#i-squad"/></svg>Squad<i class="dot"></i></div>
+        </div>
+        <div class="homebar"></div>
+      </div>
+      <div class="cap"><b>2 · Home</b><span>Your live status comes first. An active PC hold shows the time draining live, with Cancel. Both wallets are always visible. Two big actions: hold a PC or start a PS5.</span></div>
+    </div>
+
+    <!-- 3. PLAY — PCs + hold sheet -->
+    <div>
+      <div class="phone">
+        <div class="status"><span>9:41</span><div class="island"></div><div class="icons"><span></span></div></div>
+        <div class="scr">
+          <div class="h1">Play</div>
+          <div class="seg" style="margin-top:14px"><div class="on">PCs</div><div>PlayStation</div></div>
+          <div class="between" style="margin-top:16px">
+            <div class="legend"><span><i style="background:var(--em)"></i>Free</span><span><i style="background:var(--amber)"></i>Held</span><span><i style="background:var(--red)"></i>Busy</span></div>
+            <span class="pill em"><i class="live"></i>Live</span>
+          </div>
+          <div class="eyebrow" style="margin-top:16px">Main hall</div>
+          <div class="pcgrid" style="margin-top:10px">
+            <div class="seat free">PC-01<small>Free</small></div>
+            <div class="seat busy">PC-02<small>Busy</small></div>
+            <div class="seat busy">PC-03<small>Busy</small></div>
+            <div class="seat free">PC-04<small>Free</small></div>
+            <div class="seat held">PC-05<small>Held</small></div>
+            <div class="seat free">PC-06<small>Free</small></div>
+            <div class="seat sel">PC-07<small style="color:var(--em)">Selected</small></div>
+            <div class="seat off">PC-08<small>Offline</small></div>
+          </div>
+          <div class="eyebrow" style="margin-top:16px">VIP room</div>
+          <div class="pcgrid" style="margin-top:10px">
+            <div class="seat free">VIP-1<small>Free</small></div>
+            <div class="seat busy">VIP-2<small>Busy</small></div>
+            <div class="seat free">VIP-3<small>Free</small></div>
+            <div class="seat free">VIP-4<small>Free</small></div>
+          </div>
+        </div>
+        <div class="scrim"></div>
+        <div class="sheet">
+          <div class="grab"></div>
+          <div class="between"><div><div class="eyebrow">Hold now</div><div class="h2" style="margin-top:4px">PC-07 · Main hall</div></div><img src="../assets/art/pc-display.png" style="width:74px"></div>
+          <div class="glass" style="padding:12px 14px;margin-top:12px;border-radius:16px;border-color:rgba(255,200,87,.3);background:rgba(255,200,87,.07)">
+            <div class="flex small" style="color:var(--amber);font-weight:700"><svg class="ic"><use href="#i-clock"/></svg>Your time starts draining now</div>
+            <div class="tiny muted" style="margin-top:4px">The PC logs you in behind a lock screen. Enter your PIN there to play. Cancel any time and you only pay the minutes used.</div>
+          </div>
+          <div class="between small" style="margin-top:12px"><span class="muted">PC time left</span><b>3h 12m</b></div>
+          <div class="btn primary" style="margin-top:14px">Hold PC-07</div>
+        </div>
+        <div class="homebar"></div>
+      </div>
+      <div class="cap"><b>3 · Play › PCs</b><span>Live map of every PC by room. Tap a free PC to hold it. The confirm sheet says plainly that time drains from this moment. The PC immediately shows the Reserved lock screen (see 10).</span></div>
+    </div>
+  </div>
+
+  <!-- ═════════════════ ROW 2 ═════════════════ -->
+  <div class="section-title">PlayStation · Wallet</div>
+  <div class="row">
+
+    <!-- 4. PS SCAN -->
+    <div>
+      <div class="phone">
+        <div class="status" style="position:relative;z-index:4"><span>9:41</span><div class="island"></div><div class="icons"><span></span></div></div>
+        <div class="cam"><img src="../assets/art/playstation-controller.png"></div>
+        <div class="scr noPad" style="z-index:3">
+          <div class="between" style="padding:6px 18px">
+            <div class="iconbtn"><svg class="ic"><use href="#i-back"/></svg></div>
+            <span class="pill blue">PS5 · 640 tokens</span>
+            <div class="iconbtn"><svg class="ic"><use href="#i-flash"/></svg></div>
+          </div>
+          <div class="viewfinder"><i class="c tl"></i><i class="c tr"></i><i class="c bl"></i><i class="c br"></i><div class="qr"></div><div class="scan"></div></div>
+          <div style="position:absolute;left:0;right:0;top:404px;text-align:center;padding:0 30px">
+            <div class="h2">Scan the code on the TV</div>
+            <div class="small muted" style="margin-top:6px">Every PlayStation TV shows its own code. You have to be in front of the screen.</div>
+          </div>
+        </div>
+        <div class="sheet" style="z-index:9">
+          <div class="grab"></div>
+          <div class="between"><div><span class="pill em"><i class="live"></i>Station found</span><div class="h2" style="margin-top:8px">PS5 · Station 2</div></div><img src="../assets/art/playstation-controller.png" style="width:78px"></div>
+          <div class="grid2" style="grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px">
+            <div class="pkg"><div class="num" style="font-size:18px">30m</div><div class="tiny muted">50</div></div>
+            <div class="pkg on"><div class="num" style="font-size:18px">1h</div><div class="tiny" style="color:var(--em)">100</div></div>
+            <div class="pkg"><div class="num" style="font-size:18px">2h</div><div class="tiny muted">200</div></div>
+            <div class="pkg"><div class="num" style="font-size:18px">3h</div><div class="tiny muted">300</div></div>
+          </div>
+          <div class="between small" style="margin-top:12px"><span class="muted">From PS wallet</span><b>−100 · 540 left</b></div>
+          <div class="btn primary" style="margin-top:12px;background:linear-gradient(180deg,#8cc8ff,#3b8ef0);color:#04172c;box-shadow:0 10px 28px rgba(99,179,255,.35)">Start 1 hour</div>
+        </div>
+        <div class="homebar" style="z-index:10"></div>
+      </div>
+      <div class="cap"><b>4 · Play › PlayStation</b><span>Scan the TV's QR, pick a length, tap Start. Tokens come off the PS wallet and the TV switches to the PS5 within a few seconds. If the TV doesn't respond, the tokens are refunded automatically.</span></div>
+    </div>
+
+    <!-- 5. PS LIVE SESSION (Play tab PS segment) -->
+    <div>
+      <div class="phone">
+        <div class="status"><span>9:41</span><div class="island"></div><div class="icons"><span></span></div></div>
+        <div class="scr">
+          <div class="h1">Play</div>
+          <div class="seg" style="margin-top:14px"><div>PCs</div><div class="on" style="color:var(--blue);background:rgba(99,179,255,.14);box-shadow:inset 0 0 0 1px rgba(99,179,255,.3)">PlayStation</div></div>
+          <div class="wallet ps" style="margin-top:16px;height:200px">
+            <img src="../assets/art/playstation-controller.png" style="width:170px;right:-24px;bottom:-30px">
+            <span class="pill blue"><i class="live" style="box-shadow:0 0 0 3px rgba(99,179,255,.2)"></i>PLAYING NOW</span>
+            <div class="h2" style="margin-top:12px">PS5 · Station 2</div>
+            <div class="num" style="font-size:44px;margin-top:8px">47:12</div>
+            <div class="small muted">left · ends 10:28 PM</div>
+          </div>
+          <div class="progress" style="margin-top:12px"><i style="width:78%;background:linear-gradient(90deg,#3b8ef0,#8cc8ff);box-shadow:0 0 12px rgba(99,179,255,.4)"></i></div>
+          <div class="btn ghost" style="margin-top:14px"><svg class="ic"><use href="#i-food"/></svg>Order to Station 2</div>
+          <div class="between" style="margin-top:18px"><div class="h3">Stations</div><span class="small faint">2 of 4 free</span></div>
+          <div class="stack" style="margin-top:10px">
+            <div class="glass between" style="padding:12px 14px;border-radius:18px"><div class="flex"><div class="qi" style="width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:rgba(99,179,255,.12);color:var(--blue)"><svg class="ic"><use href="#i-play"/></svg></div><div><div class="h3">Station 1</div><div class="tiny muted">Free · scan to start</div></div></div><span class="pill em">Free</span></div>
+            <div class="glass between" style="padding:12px 14px;border-radius:18px"><div class="flex"><div class="qi" style="width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:rgba(255,93,108,.12);color:var(--red)"><svg class="ic"><use href="#i-play"/></svg></div><div><div class="h3">Station 3</div><div class="tiny muted">Busy · free in 22 min</div></div></div><span class="pill red">Busy</span></div>
+          </div>
+        </div>
+        <div class="tabs">
+          <div class="tab"><svg><use href="#i-home"/></svg>Home<i class="dot"></i></div>
+          <div class="tab on"><svg><use href="#i-play"/></svg>Play<i class="dot"></i></div>
+          <div class="tab"><svg><use href="#i-food"/></svg>Order<i class="dot"></i></div>
+          <div class="tab"><svg><use href="#i-wallet"/></svg>Wallet<i class="dot"></i></div>
+          <div class="tab"><svg><use href="#i-squad"/></svg>Squad<i class="dot"></i></div>
+        </div>
+        <div class="homebar"></div>
+      </div>
+      <div class="cap"><b>5 · Live PS session</b><span>Big countdown while you play, which station you're on, and a one-tap food order delivered to that station. Other stations show when they free up.</span></div>
+    </div>
+
+    <!-- 6. WALLET + CONVERT -->
+    <div>
+      <div class="phone">
+        <div class="status"><span>9:41</span><div class="island"></div><div class="icons"><span></span></div></div>
+        <div class="scr">
+          <div class="h1">Wallet</div>
+          <div class="wallet pc" style="margin-top:14px">
+            <img src="../assets/art/pc-display.png">
+            <div class="flex"><svg class="ic" style="color:var(--em)"><use href="#i-monitor"/></svg><span class="eyebrow" style="color:var(--em)">PC wallet</span></div>
+            <div class="num" style="font-size:38px;margin-top:8px">1,280</div>
+            <div class="small muted">tokens · 3h 12m PC time</div>
+          </div>
+          <div class="swapbtn"><svg class="ic"><use href="#i-swap"/></svg></div>
+          <div class="wallet ps">
+            <img src="../assets/art/playstation-controller.png">
+            <div class="flex"><svg class="ic" style="color:var(--blue)"><use href="#i-play"/></svg><span class="eyebrow" style="color:var(--blue)">PlayStation wallet</span></div>
+            <div class="num" style="font-size:38px;margin-top:8px">640</div>
+            <div class="small muted">tokens · 100 per hour</div>
+          </div>
+          <div class="glass" style="padding:14px 16px;margin-top:12px;border-radius:20px">
+            <div class="between"><span class="h3">Move PC → PS</span><span class="pill">1 : 1</span></div>
+            <div class="input focus" style="margin-top:10px;height:48px;justify-content:space-between"><span class="num" style="font-size:22px">200</span><span class="tiny faint">MAX 1,280</span></div>
+            <div class="feeRow" style="margin-top:6px"><span>Fee (5%)</span><b>−10</b></div>
+            <div class="feeRow" style="padding-top:0"><span>PS wallet receives</span><b style="color:var(--blue)">+190</b></div>
+          </div>
+          <div class="btn primary" style="margin-top:10px">Move 200 tokens</div>
+        </div>
+        <div class="tabs">
+          <div class="tab"><svg><use href="#i-home"/></svg>Home<i class="dot"></i></div>
+          <div class="tab"><svg><use href="#i-play"/></svg>Play<i class="dot"></i></div>
+          <div class="tab"><svg><use href="#i-food"/></svg>Order<i class="dot"></i></div>
+          <div class="tab on"><svg><use href="#i-wallet"/></svg>Wallet<i class="dot"></i></div>
+          <div class="tab"><svg><use href="#i-squad"/></svg>Squad<i class="dot"></i></div>
+        </div>
+        <div class="homebar"></div>
+      </div>
+      <div class="cap"><b>6 · Wallet</b><span>Two wallets stacked, with a swap button between them to change direction. You always see the 5% fee and the exact amount that arrives before you confirm. Top-ups stay at the counter, as they work today.</span></div>
+    </div>
+  </div>
+
+  <!-- ═════════════════ ROW 3 ═════════════════ -->
+  <div class="section-title">Order · Events · Squad</div>
+  <div class="row">
+
+    <!-- 7. ORDER -->
+    <div>
+      <div class="phone">
+        <div class="status"><span>9:41</span><div class="island"></div><div class="icons"><span></span></div></div>
+        <div class="scr">
+          <div class="between"><div class="h1">Order</div><span class="pill em">To PC-07</span></div>
+          <div class="seg" style="margin-top:14px"><div class="on">Food</div><div>Hookah</div><div>Tobacco</div></div>
+          <div class="flex" style="margin-top:12px;gap:8px">
+            <span class="pill em">All</span><span class="pill">Drinks</span><span class="pill">Snacks</span><span class="pill">Food</span>
+          </div>
+          <div class="food" style="margin-top:12px">
+            <div class="fcard"><div class="ph"><img src="../assets/menu/karak-tea.jpg"><span class="pill t">3 min</span></div><div class="bd"><div class="h3">Karak Tea</div><div class="tiny faint">شاي كرك</div><div class="between" style="margin-top:8px"><span class="num" style="font-size:15px">65 <span class="tiny faint">tok</span></span><div class="add">2</div></div></div></div>
+            <div class="fcard"><div class="ph"><img src="../assets/menu/burger.jpg"><span class="pill t">7 min</span></div><div class="bd"><div class="h3">Beef Burger</div><div class="tiny faint">برجر لحم</div><div class="between" style="margin-top:8px"><span class="num" style="font-size:15px">120 <span class="tiny faint">tok</span></span><div class="add">+</div></div></div></div>
+            <div class="fcard"><div class="ph"><img src="../assets/menu/fries.jpg"><span class="pill t">5 min</span></div><div class="bd"><div class="h3">Fries Large</div><div class="tiny faint">بطاطا كبير</div><div class="between" style="margin-top:8px"><span class="num" style="font-size:15px">100 <span class="tiny faint">tok</span></span><div class="add">1</div></div></div></div>
+            <div class="fcard"><div class="ph"><img src="../assets/menu/energy-drink.jpg"><span class="pill t">1 min</span></div><div class="bd"><div class="h3">Energy Drink</div><div class="tiny faint">مشروب طاقة</div><div class="between" style="margin-top:8px"><span class="num" style="font-size:15px">85 <span class="tiny faint">tok</span></span><div class="add">+</div></div></div></div>
+          </div>
+        </div>
+        <div class="cart"><span>3 items · 230 tokens</span><div class="go">Place order<svg class="ic"><use href="#i-chev"/></svg></div></div>
+        <div class="tabs">
+          <div class="tab"><svg><use href="#i-home"/></svg>Home<i class="dot"></i></div>
+          <div class="tab"><svg><use href="#i-play"/></svg>Play<i class="dot"></i></div>
+          <div class="tab on"><svg><use href="#i-food"/></svg>Order<i class="dot"></i></div>
+          <div class="tab"><svg><use href="#i-wallet"/></svg>Wallet<i class="dot"></i></div>
+          <div class="tab"><svg><use href="#i-squad"/></svg>Squad<i class="dot"></i></div>
+        </div>
+        <div class="homebar"></div>
+      </div>
+      <div class="cap"><b>7 · Order</b><span>Food, Hookah (flavor → ice → confirm) and Tobacco, with your real menu photos and Arabic names. The order goes to the PC or PS station you're on. Paid from the PC wallet, and a live tracker follows it.</span></div>
+    </div>
+
+    <!-- 8. EVENTS -->
+    <div>
+      <div class="phone">
+        <div class="status"><span>9:41</span><div class="island"></div><div class="icons"><span></span></div></div>
+        <div class="scr">
+          <div class="between"><div class="flex"><div class="iconbtn"><svg class="ic"><use href="#i-back"/></svg></div><div class="h1" style="font-size:26px">Events</div></div></div>
+          <div class="seg" style="margin-top:14px"><div class="on">Tournaments</div><div>Leaderboard</div></div>
+          <div class="tcard" style="margin-top:14px">
+            <img src="../assets/games/valorant-banner.jpg">
+            <div class="in">
+              <div class="between"><span class="pill em"><i class="live"></i>OPEN</span><span class="pill">12 / 16</span></div>
+              <div>
+                <div class="h2">Ninja Open · Valorant</div>
+                <div class="small muted" style="margin-top:2px">5v5 · Fri 8:00 PM · Prize 50 JOD</div>
+                <div class="btn primary" style="height:40px;margin-top:10px;font-size:14px">Join · 150 tokens</div>
+              </div>
+            </div>
+          </div>
+          <div class="eyebrow" style="margin-top:18px">Top players · playtime</div>
+          <div style="margin-top:8px">
+            <div class="lb"><span class="rk" style="color:var(--amber)">1</span><div class="avatar" style="width:34px;height:34px;border-radius:12px">MK</div><div style="flex:1"><div class="h3">mk2008</div><div class="tiny faint">Lv 42</div></div><span class="num">412h</span></div>
+            <div class="lb"><span class="rk">2</span><div class="avatar" style="width:34px;height:34px;border-radius:12px">AZ</div><div style="flex:1"><div class="h3">aziz44</div><div class="tiny faint">Lv 39</div></div><span class="num">380h</span></div>
+            <div class="lb me"><span class="rk" style="color:var(--em)">14</span><div class="avatar" style="width:34px;height:34px;border-radius:12px"><img src="../assets/art/ninja-mascot.png"></div><div style="flex:1"><div class="h3">You</div><div class="tiny faint">Lv 21</div></div><span class="num">96h</span></div>
+          </div>
+        </div>
+        <div class="tabs">
+          <div class="tab on"><svg><use href="#i-home"/></svg>Home<i class="dot"></i></div>
+          <div class="tab"><svg><use href="#i-play"/></svg>Play<i class="dot"></i></div>
+          <div class="tab"><svg><use href="#i-food"/></svg>Order<i class="dot"></i></div>
+          <div class="tab"><svg><use href="#i-wallet"/></svg>Wallet<i class="dot"></i></div>
+          <div class="tab"><svg><use href="#i-squad"/></svg>Squad<i class="dot"></i></div>
+        </div>
+        <div class="homebar"></div>
+      </div>
+      <div class="cap"><b>8 · Events</b><span>Opened from Home's "Next up". Tournaments use the real game banners. Join asks for your PIN, like the kiosk. The leaderboard pins your own rank.</span></div>
+    </div>
+
+    <!-- 9. SQUAD -->
+    <div>
+      <div class="phone">
+        <div class="status"><span>9:41</span><div class="island"></div><div class="icons"><span></span></div></div>
+        <div class="scr">
+          <div class="between"><div class="h1">Squad</div><div class="iconbtn"><svg class="ic"><use href="#i-plus"/></svg></div></div>
+          <div class="glass flex" style="padding:10px 12px;margin-top:14px;border-radius:18px;border-color:rgba(43,227,138,.3)">
+            <div class="avatar" style="width:36px;height:36px">TQ</div>
+            <div style="flex:1"><div class="h3">tareq wants to join your squad</div></div>
+            <span class="pill em">Accept</span>
+          </div>
+          <div class="eyebrow" style="margin-top:16px">Online · 3</div>
+          <div class="friend"><div class="onl"><div class="avatar">AB</div></div><div style="flex:1"><div class="h3">abood2004</div><div class="tiny" style="color:var(--em)">Playing Valorant · PC-04</div></div><svg class="ic faint"><use href="#i-chat"/></svg></div>
+          <div class="friend"><div class="onl"><div class="avatar">MZ</div></div><div style="flex:1"><div class="h3">mazen1212</div><div class="tiny" style="color:var(--blue)">PS5 · Station 3</div></div><svg class="ic faint"><use href="#i-chat"/></svg></div>
+          <div class="friend"><div class="onl"><div class="avatar">KR</div></div><div style="flex:1"><div class="h3">kareem28</div><div class="tiny muted">In the app</div></div><svg class="ic faint"><use href="#i-chat"/></svg></div>
+          <div style="margin-top:14px" class="glass">
+            <div class="between" style="padding:12px 14px;border-bottom:1px solid var(--line)"><div class="flex"><div class="avatar" style="width:30px;height:30px;border-radius:10px;font-size:12px">AB</div><span class="h3">abood2004</span></div><span class="tiny faint">now</span></div>
+            <div style="padding:12px 14px" class="stack">
+              <div class="bubble them">bro come PC-05 is free next to me</div>
+              <div class="bubble me">holding PC-07, there in 10 🔥</div>
+            </div>
+            <div style="padding:0 10px 10px"><div class="input" style="height:44px;border-radius:14px;justify-content:space-between"><span class="small">Message…</span><svg class="ic" style="color:var(--em)"><use href="#i-send"/></svg></div></div>
+          </div>
+        </div>
+        <div class="tabs">
+          <div class="tab"><svg><use href="#i-home"/></svg>Home<i class="dot"></i></div>
+          <div class="tab"><svg><use href="#i-play"/></svg>Play<i class="dot"></i></div>
+          <div class="tab"><svg><use href="#i-food"/></svg>Order<i class="dot"></i></div>
+          <div class="tab"><svg><use href="#i-wallet"/></svg>Wallet<i class="dot"></i></div>
+          <div class="tab on"><svg><use href="#i-squad"/></svg>Squad<i class="dot"></i></div>
+        </div>
+        <div class="homebar"></div>
+      </div>
+      <div class="cap"><b>9 · Squad</b><span>Friends with live presence: which PC or PS station each friend is on. Requests appear at the top. Chat syncs with the kiosk chat bubble both ways.</span></div>
+    </div>
+  </div>
+
+  <!-- ═════════════════ ROW 4 ═════════════════ -->
+  <div class="section-title">On the PC · Arabic</div>
+  <div class="row" style="align-items:center">
+    <div>
+      <div class="monitor">
+        <div class="screen">
+          <div class="blocker">
+            <div style="width:56px;height:56px;border-radius:18px;margin:0 auto 14px;display:grid;place-items:center;background:rgba(57,255,20,.1);color:#39FF14"><svg class="ic" style="width:26px;height:26px"><use href="#i-key"/></svg></div>
+            <div class="eyebrow" style="color:rgba(57,255,20,.7)">Reserved from the Ninja app</div>
+            <div class="h1" style="font-size:26px;margin-top:6px">@ninja_omar</div>
+            <div class="small muted" style="margin-top:6px">Your time is running · held 4 min ago</div>
+            <div class="input focus" style="margin-top:16px;justify-content:center;letter-spacing:.6em;font-size:20px;border-color:rgba(57,255,20,.5)">••••</div>
+            <div class="btn primary" style="margin-top:12px;background:#39FF14;box-shadow:0 10px 26px rgba(57,255,20,.3)"><svg class="ic"><use href="#i-lock"/></svg>Unlock &amp; play</div>
+            <div class="tiny faint" style="margin-top:12px">Not you? This PC is held for another player.</div>
+          </div>
+        </div>
+      </div>
+      <div class="stand"></div>
+      <div class="cap" style="max-width:760px"><b>10 · PC kiosk while held</b><span>Holding a PC from the app logs you in on that PC behind this blocker. Your username is locked in, and only your PIN unlocks it. Anyone else who tries gets "held for another player". This is already built into the kiosk login screen.</span></div>
+    </div>
+
+    <div>
+      <div class="phone rtl">
+        <div class="status" style="direction:ltr"><span>9:41</span><div class="island"></div><div class="icons"><span></span></div></div>
+        <div class="scr">
+          <div class="between">
+            <div class="flex"><div class="avatar"><img src="../assets/art/ninja-mascot.png"></div><div><div class="tiny faint">مساء الخير</div><div class="h3">ninja_omar</div></div></div>
+            <div class="iconbtn"><svg class="ic"><use href="#i-bell"/></svg><i class="badge" style="right:auto;left:9px"></i></div>
+          </div>
+          <div class="grid2" style="margin-top:16px">
+            <div class="bal pc glass"><div class="between"><div class="ico"><svg class="ic"><use href="#i-monitor"/></svg></div><span class="tiny faint">PC</span></div><div class="num" style="font-size:24px;margin-top:10px">1,280</div><div class="tiny muted">توكن · ٣ س ١٢ د</div></div>
+            <div class="bal ps glass"><div class="between"><div class="ico"><svg class="ic"><use href="#i-play"/></svg></div><span class="tiny faint">PS5</span></div><div class="num" style="font-size:24px;margin-top:10px">640</div><div class="tiny muted">توكن بلايستيشن</div></div>
+          </div>
+          <div class="grid2" style="margin-top:10px">
+            <div class="qa glass"><div class="qi" style="background:rgba(43,227,138,.14);color:var(--em)"><svg class="ic"><use href="#i-monitor"/></svg></div><div><div class="h3">احجز جهاز</div><div class="tiny muted">٨ من ١٢ متاحة</div></div></div>
+            <div class="qa glass"><div class="qi" style="background:rgba(99,179,255,.14);color:var(--blue)"><svg class="ic"><use href="#i-scan"/></svg></div><div><div class="h3">ابدأ PS5</div><div class="tiny muted">امسح رمز الشاشة</div></div></div>
+          </div>
+          <div class="hero" style="margin-top:14px;height:130px">
+            <img src="../assets/art/ninja-home-keyart.png">
+            <div class="in" style="text-align:right"><span class="pill em" style="align-self:flex-start">بطولة</span><div><div class="h2">نينجا أوبن · فالورانت</div><div class="tiny muted">الجمعة ٨ مساءً</div></div></div>
+          </div>
+        </div>
+        <div class="tabs">
+          <div class="tab"><svg><use href="#i-squad"/></svg>الفريق<i class="dot"></i></div>
+          <div class="tab"><svg><use href="#i-wallet"/></svg>المحفظة<i class="dot"></i></div>
+          <div class="tab"><svg><use href="#i-food"/></svg>اطلب<i class="dot"></i></div>
+          <div class="tab"><svg><use href="#i-play"/></svg>العب<i class="dot"></i></div>
+          <div class="tab on"><svg><use href="#i-home"/></svg>الرئيسية<i class="dot"></i></div>
+        </div>
+        <div class="homebar"></div>
+      </div>
+      <div class="cap"><b>11 · Arabic</b><span>The whole app mirrors right-to-left, including the tab bar, icons and numbers. The language switch is on the sign-in screen and in Profile.</span></div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>Removed from the app</b> (they stay on the PC kiosk): chests, inventory, daily tasks, skins, clubs, voice calls, mini-games, store bundles.
+    <b>Profile</b> (avatar → sheet): username, level, VIP, language, notifications, sign out, delete account. Delete account is required by Apple and Google.
+    <b>Push notifications:</b> PC hold running low, PS session ending in 5 min, order ready, friend request, tournament starting.
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,66 @@
+{
+  "expo": {
+    "name": "Ninja Games",
+    "slug": "ninja-games",
+    "version": "2.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "ninjagames",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#04090A",
+    "ios": {
+      "bundleIdentifier": "com.ninjagamesjo.player",
+      "supportsTablet": false,
+      "associatedDomains": ["applinks:www.ninjagamesjo.com"],
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.ninjagamesjo.player",
+      "adaptiveIcon": {
+        "backgroundColor": "#04090A",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [{ "scheme": "https", "host": "www.ninjagamesjo.com", "pathPrefix": "/ps" }],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-font",
+      "expo-image",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Ninja Games uses the camera to scan the code on a PlayStation screen.",
+          "recordAudioAndroid": false,
+          "barcodeScannerEnabled": true
+        }
+      ],
+      [
+        "expo-localization",
+        { "supportsRTL": true }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "apiBaseUrl": "https://www.ninjagamesjo.com"
+    }
+  }
+}
