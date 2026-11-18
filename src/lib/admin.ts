@@ -12,7 +12,8 @@ export type AdminPc = {
 export type TopupReq = { id: string; playerId: string; playerName: string; coins: number; price: number; packageId: string; createdAt: number };
 export type GuestReq = { id: string; pcName: string; pcId: string; createdAt: number };
 export type RegReq = { id: string; username: string; firstName: string; lastName: string; phone: string; pcName: string; createdAt: number };
-export type Overview = { now: number; pcs: AdminPc[]; topups: TopupReq[]; guests: GuestReq[]; registrations: RegReq[]; pendingVer?: number };
+export type Overview = { now: number; pcs: AdminPc[]; topups: TopupReq[]; guests: GuestReq[]; registrations: RegReq[]; psAlerts?: PsAlert[]; pendingVer?: number };
+export type PsAlert = { id: string; kind: 'warning' | 'ended'; stationId: string; stationName: string; playerName: string; endsAt: number; at: number };
 export type AdminPlayer = {
   id: string; username: string; displayName: string; firstName: string; lastName: string; phone: string;
   coins: number; psCoins: number; remainingPlaytime: number; vip: boolean; banned: boolean; lastLogin: number; createdAt: number;

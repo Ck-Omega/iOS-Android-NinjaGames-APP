@@ -1,3 +1,4 @@
+import { playAlarm } from './alarm';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import { api, ApiError } from './api';
@@ -167,6 +168,24 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     });
     return () => { stopped = true; if (timer) clearTimeout(timer); sub.remove(); };
   }, [status, isAdmin, refreshMe]);
+
+  // Player PS5 session: 5-second alarm + banner 5 minutes before it ends (computed locally
+  // from me.psSession.endsAt — no extra requests). Background delivery is the OneSignal push.
+  const psEndsAt = !isAdmin && me?.psSession?.status === 'active' ? me.psSession.endsAt : 0;
+  const psStation = me?.psSession?.stationName ?? '';
+  const warnedFor = useRef(0);
+  useEffect(() => {
+    if (!psEndsAt || warnedFor.current === psEndsAt) return;
+    const fire = () => {
+      warnedFor.current = psEndsAt;
+      void playAlarm(5);
+      showToast(lang === 'ar' ? `⏰ باقي 5 دقائق على جلسة ${psStation}` : `⏰ 5 minutes left on ${psStation}`, 'info');
+    };
+    const ms = psEndsAt - 5 * 60_000 - Date.now();
+    if (ms <= 0) { if (psEndsAt - Date.now() > 60_000) fire(); return; }
+    const timer = setTimeout(fire, ms);
+    return () => clearTimeout(timer);
+  }, [psEndsAt, psStation, lang, showToast]);
 
   const value = useMemo<SessionValue>(() => ({
     status, me, refreshMe, signIn, signInWithCustomToken, signInAdmin, isAdmin, signOut,

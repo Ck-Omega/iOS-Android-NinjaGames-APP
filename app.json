@@ -11,7 +11,9 @@
     "ios": {
       "bundleIdentifier": "com.ninjagamesjo.player",
       "supportsTablet": false,
-      "associatedDomains": ["applinks:www.ninjagamesjo.com"],
+      "associatedDomains": [
+        "applinks:www.ninjagamesjo.com"
+      ],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -29,8 +31,17 @@
         {
           "action": "VIEW",
           "autoVerify": true,
-          "data": [{ "scheme": "https", "host": "www.ninjagamesjo.com", "pathPrefix": "/ps" }],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "data": [
+            {
+              "scheme": "https",
+              "host": "www.ninjagamesjo.com",
+              "pathPrefix": "/ps"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
@@ -53,8 +64,11 @@
       ],
       [
         "expo-localization",
-        { "supportsRTL": true }
-      ]
+        {
+          "supportsRTL": true
+        }
+      ],
+      "expo-audio"
     ],
     "experiments": {
       "typedRoutes": true
