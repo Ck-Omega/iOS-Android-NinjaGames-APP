@@ -68,9 +68,9 @@ export default function SignIn() {
       <View style={{ gap: 12, marginTop: 24 }}>
         {staffMode ? null : <Field icon="user" placeholder={t('username')} value={username} onChangeText={setUsername}
           autoCapitalize="none" autoCorrect={false} autoComplete="username" textContentType="username" returnKeyType="next" />}
-        <Field icon="key" placeholder={staff ? 'Admin password' : t('pin')} value={pin}
-          onChangeText={(v) => setPin(staff ? v : asciiDigits(v).replace(/\D/g, '').slice(0, 6))}
-          keyboardType={staff ? 'default' : 'number-pad'} autoCapitalize="none" secureTextEntry autoComplete="password" textContentType="password" onSubmitEditing={submit} returnKeyType="go" />
+        <Field icon="key" placeholder={staff ? 'Admin password' : 'Password'} value={pin}
+          onChangeText={(v) => setPin(staff ? v : v.slice(0, 64))}
+          keyboardType="default" autoCapitalize="none" secureTextEntry autoComplete="password" textContentType="password" onSubmitEditing={submit} returnKeyType="go" />
         {error ? <Txt v="small" color={colors.red}>{error}</Txt> : null}
         <Button title={t('signIn')} onPress={submit} loading={busy} />
       </View>

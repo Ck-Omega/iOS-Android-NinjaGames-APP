@@ -7,11 +7,12 @@ import { getItem, setItem } from './storage';
 export type AdminPc = {
   id: string; name: string; online: boolean; inUse: boolean; guest: boolean;
   playerId: string | null; playerName: string | null; locked: boolean; timeRemaining: number; lastSeen: number;
+  version?: string; ip?: string; held?: boolean; zone?: string;
 };
 export type TopupReq = { id: string; playerId: string; playerName: string; coins: number; price: number; packageId: string; createdAt: number };
 export type GuestReq = { id: string; pcName: string; pcId: string; createdAt: number };
 export type RegReq = { id: string; username: string; firstName: string; lastName: string; phone: string; pcName: string; createdAt: number };
-export type Overview = { now: number; pcs: AdminPc[]; topups: TopupReq[]; guests: GuestReq[]; registrations: RegReq[] };
+export type Overview = { now: number; pcs: AdminPc[]; topups: TopupReq[]; guests: GuestReq[]; registrations: RegReq[]; pendingVer?: number };
 export type AdminPlayer = {
   id: string; username: string; displayName: string; firstName: string; lastName: string; phone: string;
   coins: number; psCoins: number; remainingPlaytime: number; vip: boolean; banned: boolean; lastLogin: number; createdAt: number;
@@ -22,7 +23,9 @@ export const adminApi = {
   searchPlayers: (q: string) => api.get<{ players: AdminPlayer[] }>(`/api/admin/mobile/players?q=${encodeURIComponent(q)}`),
   player: (id: string) => api.get<{ player: AdminPlayer }>(`/api/admin/mobile/players?id=${encodeURIComponent(id)}`),
   /** lock | unlock | force-logout (end session) | restart-app … (server allowlist). */
-  pcCommand: (pcId: string, command: string) => api.post('/api/pc/command', { pcId, command, reason: 'mobile admin' }),
+  pcCommand: (pcId: string, command: string, payload?: string) => api.post('/api/pc/command', { pcId, command, ...(payload ? { payload } : {}), reason: 'mobile admin' }),
+  pendingVersion: () => api.get<{ v: number }>('/api/admin/pending-version', { auth: false }),
+  banPlayer: (playerId: string, ban: boolean) => api.post('/api/admin/player-actions', { playerId, action: ban ? 'ban' : 'unban', reason: 'mobile admin' }),
   playerAction: (playerId: string, action: 'add-coins' | 'add-time' | 'deduct-coins' | 'deduct-time', amount: number) =>
     api.post('/api/admin/player-actions', { playerId, action, amount, reason: 'mobile admin', idempotencyKey: idemKey('adm') }),
   resolveTopup: (requestId: string, decision: 'approve' | 'reject') => api.post('/api/topup/resolve', { requestId, decision }),
@@ -40,7 +43,9 @@ export const adminApi = {
 export type CtlTv = {
   id: string; label: string; kind?: string; paired?: boolean; status?: string;
   session?: { user: string; ends_at: number; remaining: number } | null;
-  ps5?: { state?: string };
+  ps5?: { state?: string; ip?: string };
+  claim?: { user: string; minutes: number; expires_at: number } | null;
+  ip?: string; hdmi?: string;
 };
 
 const CTL_KEY = 'ninja.admin.tvctl';

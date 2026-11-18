@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, RefreshControl, ScrollView,
+  ActivityIndicator, Dimensions, KeyboardAvoidingView, Modal, Platform, Pressable, RefreshControl, ScrollView,
   StyleSheet, Text, TextInput, View, type StyleProp, type TextInputProps, type TextStyle, type ViewStyle,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -287,7 +287,10 @@ export function Sheet({ visible, onClose, children }: { visible: boolean; onClos
         <Pressable style={styles.scrim} onPress={onClose} />
         <View style={[styles.sheet, { paddingBottom: insets.bottom + 22 }]}>
           <View style={styles.grab} />
-          {children}
+          {/* Tall sheets (admin panels) scroll instead of running off-screen. */}
+          <ScrollView style={{ maxHeight: Dimensions.get('window').height * 0.82 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+            {children}
+          </ScrollView>
         </View>
       </KeyboardAvoidingView>
     </Modal>
