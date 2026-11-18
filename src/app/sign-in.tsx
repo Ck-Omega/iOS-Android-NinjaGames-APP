@@ -24,7 +24,7 @@ export default function SignIn() {
   const [legacy, setLegacy] = useState(false);
   // Staff: typing the kiosk's admin phrase as the username turns the PIN box into the admin password.
   const [staffMode, setStaffMode] = useState(false);
-  const staff = staffMode || username.trim().toLowerCase() === 'ghanemadmin';
+  const staff = staffMode || ['ghanemadmin', 'ghanimadmin'].includes(username.trim().toLowerCase());
 
   const submit = async () => {
     setError(''); setLegacy(false);
@@ -35,7 +35,7 @@ export default function SignIn() {
       try { await signInAdmin(pin); } catch (e) { setError(e instanceof ApiError ? e.message : errText(e)); } finally { setBusy(false); }
       return;
     }
-    if (!u || pin.length < 4) { setError(t('pinTooShort')); return; }
+    if (!u || !pin) { setError(t('pinTooShort')); return; }
     setBusy(true);
     try {
       await signIn(u, pin);

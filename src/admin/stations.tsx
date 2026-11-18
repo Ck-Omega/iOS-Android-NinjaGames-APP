@@ -188,7 +188,15 @@ function StationDetail({ base, tv, busy, act, post, found, onScan, onClose }: {
         <Txt v="eyebrow">TIMED PLAY</Txt>
         {tv.session ? (
           <View style={{ marginTop: 6, gap: 8 }}>
-            <Row between><Txt v="h3">{tv.session.user}</Txt><Text style={{ color: colors.amber, fontSize: 22, fontWeight: '800' }}>{fmtSec(left)}</Text></Row>
+            <Row between><Txt v="h3">{tv.session.user}</Txt><Text style={{ color: colors.amber, fontSize: 22, fontWeight: '800' }}>{tv.session.unlimited ? '∞' : fmtSec(left)}</Text></Row>
+            {tv.session.unlimited ? <Txt v="small">Unlimited — no auto end. Ends only when staff end it.</Txt> : null}
+            <Grid>
+              <Action label="+30 min" busy={busy === k('x30')} onPress={() => void act(k('x30'), () => post('/api/session/extend', { tv_id: id, minutes: 30 }), '+30 min')} />
+              <Action label="+1 hour" busy={busy === k('x60')} onPress={() => void act(k('x60'), () => post('/api/session/extend', { tv_id: id, minutes: 60 }), '+1 hour')} />
+              {tv.session.unlimited
+                ? <Action label="Resume timer" busy={busy === k('unl')} onPress={() => void act(k('unl'), () => post('/api/session/extend', { tv_id: id, unlimited: false }), 'Timer resumed')} />
+                : <Action label="Unlimited (no auto end)" tone="amber" busy={busy === k('unl')} onPress={() => void act(k('unl'), () => post('/api/session/extend', { tv_id: id, unlimited: true }), 'Unlimited — ends only by staff')} />}
+            </Grid>
             <Button small kind="danger" title="End session" loading={busy === k('end')} onPress={async () => {
               if (await confirm('End session', `End ${tv.session?.user}'s session? The TV returns to the kiosk and the PS5 rests.`, 'End', true)) {
                 void act(k('end'), () => post('/api/session/end', { tv_id: id }), 'Session ended');

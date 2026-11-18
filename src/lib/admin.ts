@@ -43,7 +43,7 @@ export const adminApi = {
 // ─── TVSession (LAN) ──────────────────────────────────────────────────────
 export type CtlTv = {
   id: string; label: string; kind?: string; paired?: boolean; status?: string;
-  session?: { user: string; ends_at: number; remaining: number } | null;
+  session?: { user: string; ends_at: number; remaining: number; unlimited?: boolean } | null;
   ps5?: { state?: string; ip?: string };
   claim?: { user: string; minutes: number; expires_at: number } | null;
   ip?: string; hdmi?: string;
